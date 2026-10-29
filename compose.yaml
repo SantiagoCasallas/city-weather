@@ -1,0 +1,9 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      PROVIDER_TIMEOUT_MS: "5000"
+      CACHE_TTL_SECONDS: "600"
+# PostgreSQL se incorporará con la entrega de cuentas y datos por usuario.

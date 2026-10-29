@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: city-weather
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: PROVIDER_TIMEOUT_MS
+        value: "5000"
+      - key: CACHE_TTL_SECONDS
+        value: "600"
+      - key: CACHE_MAX_ENTRIES
+        value: "500"

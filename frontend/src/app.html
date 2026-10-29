@@ -1,0 +1,231 @@
+<a class="skip" href="#main">Saltar al contenido</a>
+<header class="site-header">
+  <a class="brand" href="/" aria-label="City Weather, inicio"
+    ><span class="brand-icon" aria-hidden="true">☀</span> city<span
+      class="brand-light"
+      >weather</span
+    ><span class="brand-dot">.</span></a
+  ><span class="header-note">UN LUGAR. SU CLIMA.</span
+  ><a
+    class="source-link"
+    href="https://open-meteo.com/"
+    target="_blank"
+    rel="noopener noreferrer"
+    >Datos de Open-Meteo ↗</a
+  >
+</header>
+<main id="main">
+  <section class="intro" aria-labelledby="intro-title">
+    <div class="eyebrow"><span></span> TU PRÓXIMO DESTINO EMPIEZA AQUÍ</div>
+    <h1 id="intro-title">El mundo cambia.<br />Consulta <em>su clima.</em></h1>
+    <p>
+      De tu ciudad a cualquier rincón del mundo.<br />El tiempo de ahora y los
+      próximos siete días, en un solo lugar.
+    </p>
+    <div class="intro-orbit" aria-hidden="true">
+      <div class="sun">☀</div>
+      <span class="orbit-label">UNA MIRADA AL CIELO</span>
+    </div>
+  </section>
+  <section class="search-panel" aria-labelledby="search-label">
+    <form (ngSubmit)="search()">
+      <label id="search-label" for="city">¿Qué ciudad tienes en mente?</label>
+      <div class="search-row">
+        <span aria-hidden="true" class="search-symbol">⌕</span
+        ><input
+          id="city"
+          name="city"
+          [(ngModel)]="query"
+          maxlength="80"
+          autocomplete="off"
+          placeholder="Busca una ciudad, por ejemplo, Bogotá"
+          aria-describedby="search-help"
+          required
+        /><button type="submit">
+          {{ searching() ? 'Buscando…' : 'Buscar ciudad' }}
+          <span aria-hidden="true">↗</span>
+        </button>
+      </div>
+      <p id="search-help" class="hint">
+        Elige el lugar exacto entre los resultados. Hay ciudades que comparten
+        nombre.
+      </p>
+    </form>
+  </section>
+  @if (searchError()) {
+  <div class="error" role="alert">{{ searchError() }}</div>
+  }
+  <div role="status" class="sr-only">
+    {{ searching() ? 'Buscando ciudades' : '' }}{{ loading() ? 'Consultando el
+    clima' : '' }}
+  </div>
+  @if (searched()) {
+  <section class="results" aria-labelledby="results-title">
+    <div class="section-heading">
+      <h2 id="results-title" #resultsTitle tabindex="-1">Elige tu ciudad</h2>
+      <span>{{ cities().length }} resultados</span>
+    </div>
+    @if (!cities().length) {
+    <p class="empty-result">
+      No encontramos ciudades. Prueba otro nombre o añade el país después de una
+      coma.
+    </p>
+    }
+    <div class="city-grid">
+      @for (city of cities(); track city.id) {<button
+        class="city-option"
+        type="button"
+        (click)="select(city)"
+        [class.active]="selected()?.id === city.id"
+        [attr.aria-pressed]="selected()?.id === city.id"
+      >
+        <span
+          ><strong>{{ city.name }}</strong><small>{{ location(city) }}</small
+          ><small
+            >{{ city.latitude | number:'1.2-2' }}, {{ city.longitude |
+            number:'1.2-2' }} · {{ city.timezone }}</small
+          ></span
+        ><span aria-hidden="true">↗</span></button
+      >}
+    </div>
+  </section>
+  } @if (loading()) {
+  <div class="loading">
+    <span class="loader" aria-hidden="true"></span> Consultando el cielo de {{
+    selected()?.name }}…
+  </div>
+  } @if (weatherError()) {
+  <div class="error" role="alert">
+    {{ weatherError() }}
+    <button type="button" (click)="select(selected()!)">Reintentar</button>
+  </div>
+  } @if (forecast(); as f) {
+  <section class="weather" aria-labelledby="weather-title">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">EL TIEMPO EN TU DESTINO</p>
+        <h2 id="weather-title" #weatherTitle tabindex="-1">
+          {{ selected()?.name }}<span class="country"
+            >{{ selected() ? location(selected()!) : '' }}</span
+          >
+        </h2>
+      </div>
+      <span class="timezone">{{ f.timezone }}</span>
+    </div>
+    <div class="current-card">
+      <div class="current-main">
+        <p class="card-label">
+          CLIMA ACTUAL · {{ f.current.time.slice(11,16) }} HORA LOCAL
+        </p>
+        <div class="temperature">
+          {{ f.current.temperature === null ? '—' : (f.current.temperature |
+          number:'1.0-1') }}<span>{{ f.units.temperature }}</span>
+        </div>
+        <p class="condition">
+          {{ currentCondition(f.current.weatherCode, f.current.isDay).label }}
+        </p>
+        <p class="feels">
+          Sensación térmica {{ f.current.apparentTemperature ?? '—' }} {{
+          f.units.temperature }}
+        </p>
+      </div>
+      <div class="weather-symbol" aria-hidden="true">
+        {{ currentCondition(f.current.weatherCode, f.current.isDay).icon }}
+      </div>
+      <div class="current-details">
+        <div>
+          <span>Humedad</span
+          ><strong
+            >{{ f.current.humidity ?? '—' }} {{ f.units.humidity }}</strong
+          >
+        </div>
+        <div>
+          <span>Viento</span
+          ><strong
+            >{{ f.current.windSpeed ?? '—' }} {{ f.units.windSpeed }}</strong
+          >
+        </div>
+        <div>
+          <span>Fecha local</span
+          ><strong>{{ dayLabel(f.current.time.slice(0,10)) }}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="section-heading forecast-heading">
+      <h3>Los próximos 7 días</h3>
+      <span>Desde mañana · hora local de la ciudad</span>
+    </div>
+    <div class="forecast-grid">
+      @for (day of f.days; track day.date) {
+      <article class="day-card">
+        <h4>{{ dayLabel(day.date) }}</h4>
+        <div class="day-icon" aria-hidden="true">
+          {{ condition(day.weatherCode).icon }}
+        </div>
+        <p class="day-condition">{{ condition(day.weatherCode).label }}</p>
+        <p class="day-temp">
+          <strong>{{ day.max ?? '—' }}{{ f.units.temperature }}</strong
+          ><span>{{ day.min ?? '—' }}{{ f.units.temperature }}</span>
+        </p>
+        <p class="rain">
+          Lluvia {{ day.precipitationProbability ?? '—' }} {{
+          f.units.precipitationProbability }}
+        </p>
+      </article>
+      }
+    </div>
+    <p class="data-note">
+      Datos consultados: {{ utcLabel(f.fetchedAt) }} UTC. Caché de hasta 10
+      minutos. Las condiciones actuales son estimaciones del modelo; «—» indica
+      un dato no disponible.
+    </p>
+  </section>
+  } @else if (!loading() && !weatherError()) {
+  <section class="welcome" aria-label="Cómo empezar">
+    <div class="welcome-art" aria-hidden="true">☁<span>☀</span></div>
+    <div>
+      <p class="eyebrow">CADA CIUDAD TIENE SU CIELO</p>
+      <h2>¿Sol, lluvia o un poco de ambos?</h2>
+      <p>
+        Busca una ciudad para descubrirlo.<br />El pronóstico aparecerá aquí
+        cuando elijas un lugar.
+      </p>
+    </div>
+    <span class="welcome-coordinate" aria-hidden="true"
+      >N 04° 36′<br />W 074° 04′</span
+    >
+  </section>
+  }
+  <section class="features" aria-label="Características">
+    <div>
+      <span aria-hidden="true">◎</span>
+      <p>
+        <strong>El lugar correcto</strong
+        ><small>Ciudad, región y país para ubicarte.</small>
+      </p>
+    </div>
+    <div>
+      <span aria-hidden="true">◷</span>
+      <p>
+        <strong>A su hora</strong
+        ><small>Fechas en la zona horaria de tu destino.</small>
+      </p>
+    </div>
+    <div>
+      <span aria-hidden="true">↗</span>
+      <p>
+        <strong>Una semana por delante</strong
+        ><small>Temperatura y probabilidad de lluvia.</small>
+      </p>
+    </div>
+  </section>
+</main>
+<footer>
+  <a class="brand" href="/">city<span class="brand-light">weather</span>.</a>
+  <p>Un proyecto para explorar el mundo, un clima a la vez.</p>
+  <p>
+    Clima: <a href="https://open-meteo.com/">Open-Meteo</a> · Geocodificación:
+    <a href="https://www.geonames.org/">GeoNames</a> ·
+    <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+  </p>
+</footer>
